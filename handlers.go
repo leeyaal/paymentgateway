@@ -51,8 +51,6 @@ func block(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-///// рандом номера + deal для charge
-
 func charge(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusNotFound)
