@@ -7,9 +7,6 @@ import (
 
 const (
 	Port        = 7000
-	checkoutUrl = "https://paypage.ru/api/url/"
-	merchantID  = "133264"
-	key         = "Testterminal1"
 )
 
 func main() {
@@ -23,8 +20,6 @@ func main() {
 	if err != nil {
 		log.Fatal("ListenAndServe", err)
 	}
+	fmt.Println("OK")
 }
 
-/////          CHARGE
-////  		   ДОПЫ К CHARGE
-////           BLOCK dealid
