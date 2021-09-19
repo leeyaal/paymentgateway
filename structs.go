@@ -48,7 +48,7 @@ func (c Card) Verify() error {
 	for _, s := range strs {
 		num, err := strconv.Atoi(s)
 		if err == nil {
-			ints = append(ints, num) ////////PANIC
+			ints = append(ints, num) 
 		}
 
 		if ints[14] > 4 {
@@ -94,32 +94,4 @@ func (c Card) Verify() error {
 	}
 
 	return nil
-}
-
-func (c Card) Init() error {
-	mux.Lock()
-	var dealID int
-	dealID = rand.Intn(999999)
-	fmt.Println(dealID) //// НУЖЕН УКАЗАТЕЛЬ??
-	///rand.Seed(time.Now().Unix())
-	mux.Unlock()
-
-	return nil
-}
-
-func WriteFile() error {
-	f, err := os.Create("Testcard.file")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	_, err := f.WriteString(&OrderID, &Amount)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (c Card) Debit() error {
-
 }
