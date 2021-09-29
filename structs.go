@@ -84,7 +84,7 @@ func (br BlockRequest) GetData() error {
 
 	//добавление...
 	result, err := db.Exec("insert into merchants (merchant_id, merchant_contract_id, order_id, blocked_amount, charged_amount) values ($0, $1, $2, $3, $4)",
-		"br.MerchantID", 0, "br.OrderID", 0, 0)
+		br.MerchantID, 0, br.OrderID, 0, 0)
 	if err != nil {
 		return fmt.Errorf("2")
 	} // не поддерживается
