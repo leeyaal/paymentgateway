@@ -1,32 +1,49 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
-	"math/rand"
-	"os"
-	"strconv"
-	"strings"
-	"sync"
 	"time"
+
+	_ "github.com/lib/pq"
+	"github.com/theplant/luhn"
 )
 
 type (
 	BlockRequest struct {
-		MerchantContractID int  `json:"merchantContractID"`
-		Card               Card `json:"card"`
-		Deal               Deal `json:"deal"`
+		MerchantID         string `json:"merchantID"`
+		MerchantContractID int    `json:"merchantContractID"`
+		Card               Card   `json:"card"`
+		Amount             int    `json:"amount"`
+		OrderID            string `json:"orderID"`
 	}
 	Card struct {
-		PAN    string `json:"PAN"`
+		PAN    int    `json:"PAN"`
 		EMonth int    `json:"eMonth"`
 		EYear  int    `json:"eYear"`
 		CVV    int    `json:"CVV"`
 		Holder string `json:"holder"`
 	}
 	Deal struct {
-		OrderID string `json:"orderID"`
-		Amount  int    `json:"amount"`
-		mux     sync.Mutex
+		MerchantID string `json:"merchantID"`
+		OrderID    string `json:"orderID"`
+		Amount     int    `json:"amount"`
+		State      string `json:"state"`
+	}
+	ChargeRequest struct {
+		MerchantID         string `json:"merchantID"`
+		MerchantContractID int    `json:"merchantContractID"`
+		Amount             int    `json:"amount"`
+		OrderID            string `json:"orderID"`
+	}
+	Merchant struct {
+		MerchantID         string `json:"merchantID"`
+		MerchantContractID int    `json:"merchantContractID"`
+		FullName           string `json:"fullname"`
+	}
+	Order struct {
+		OrderID    string `json:"orderID"`
+		MerchantID string `json:"merchantID"`
 	}
 )
 
@@ -42,55 +59,61 @@ func (c Card) Verify() error {
 
 		return fmt.Errorf("CVV is incorrect, try again") //
 	}
+	
+	//Luhn...
+	validation := luhn.Valid(c.PAN)
+	if validation != true {
+		return fmt.Errorf("credit card is invalid, try another one")
+	}
 
-	strs := strings.Split(c.PAN, "")
-	var ints []int
-	for _, s := range strs {
-		num, err := strconv.Atoi(s)
-		if err == nil {
-			ints = append(ints, num) 
-		}
+	//Holder Check...
+	if len(c.Holder) > 27 {
+	return fmt.Errorf("Name of card holder incorrect, try another card")
+	}
 
-		if ints[14] > 4 {
-			ints[14] = ints[14]*2 - 9
-		}
-		if ints[12] > 4 {
-			ints[12] = ints[12]*2 - 9
-		}
-		if ints[10] > 4 {
-			ints[10] = ints[10]*2 - 9
-		}
-		if ints[8] > 4 {
-			ints[8] = ints[8]*2 - 9
-		}
-		if ints[6] > 4 {
-			ints[6] = ints[6]*2 - 9
-		}
-		if ints[4] > 4 {
-			ints[4] = ints[4]*2 - 9
-		}
-		if ints[2] > 4 {
-			ints[2] = ints[2]*2 - 9
-		}
-		if ints[0] > 4 {
-			ints[0] = ints[0]*2 - 9
-		}
-		nums := ints
-		sum := 0
-		for _, num := range nums {
-			sum += num
+		
+func (br BlockRequest) GetData() error {
 
-			if sum%10 == 0 {
-				fmt.Println("PAN is correct")
-			} else {
-				fmt.Println("PAN is incorrect, try another card")
-			}
-		}
+	//connect...
+	connStr := "user=postgres password=йцукен7 dbname=payment sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return fmt.Errorf("1")
+	}
+	defer db.Close()
 
-		if len(c.Holder) > 27 {
-			return fmt.Errorf("Name of card holder incorrect, try another card")
-		}
+	//добавление...
+	result, err := db.Exec("insert into merchants (merchant_id, merchant_contract_id, order_id, blocked_amount, charged_amount) values ($0, $1, $2, $3, $4)",
+		"br.MerchantID", 0, "br.OrderID", 0, 0)
+	if err != nil {
+		return fmt.Errorf("2")
+	} // не поддерживается
 
+	fmt.Println(result.RowsAffected())
+
+	// запрос инфы...
+	rows, err := db.Query("select * from merchants")
+	if err != nil {
+		return fmt.Errorf("3")
+	}
+	defer rows.Close()
+	merchants := []BlockRequest{}
+
+	// //просмотр строк...
+	for rows.Next() {
+		b := BlockRequest{}
+		err := rows.Scan(&b.MerchantID, &b.MerchantContractID, &b.OrderID)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		merchants = append(merchants, b)
+	}
+	for _, b := range merchants {
+		fmt.Println(b.MerchantID, b.MerchantContractID, b.OrderID)
+	}
+	return nil
+}
 	}
 
 	return nil
