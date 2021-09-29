@@ -49,6 +49,12 @@ func block(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, err.Error())
 		return
 	}
+	
+	if err := br.GetData(); err != nil {
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprint(w, "FAULT")
+	return
+	}
 }
 
 func charge(w http.ResponseWriter, r *http.Request) {
