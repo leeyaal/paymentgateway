@@ -5,10 +5,6 @@ import (
 	"net/http"
 )
 
-const (
-	Port        = 7000
-)
-
 func main() {
 	// change, err :=
 	port := ":7000"
